@@ -1,0 +1,9 @@
+#TODO: make more intelligent
+
+echo "Installing debug"
+
+sudo cp ./src/bin/Debug/hdltk.exe /usr/bin
+
+if [ ! $(echo $MONO_PATH | grep "$(pwd)/src/bin/Debug") ];  then
+	export MONO_PATH=$MONO_PATH:$(pwd)/src/bin/Debug;
+fi
