@@ -4,3 +4,11 @@ HDL Toolkit
 Introduction
 ------------
 A Toolkit for HDL (VHDL, Verilog) projects, peripherals, cores, simulation, etc.
+
+Linux development Getting Started
+---------------------------------
+
+$ sudo apt-get install monodevelop
+$ monodevelop ./hdltoolkit.sln &
+Build -> Build All (or F8)
+$ source ./unix_install
