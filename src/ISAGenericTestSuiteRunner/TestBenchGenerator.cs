@@ -22,9 +22,10 @@ namespace ISAGenericTestSuiteRunner
 
 		public static MemoryStream GenerateMachineCode(string workingDirectory, string asmFile)
 		{
-			Logger.Instance.WriteVerbose("Generating Machine code from assembly file using avr-gcc");
+			Logger.Instance.WriteVerbose("Generating Machine code from assembly file using gcc");
 			ProcessHelper.ProcessExecutionResult result = ProcessHelper.ExecuteProcess(workingDirectory,
-				"avr-gcc", "-x assembler-with-cpp \"" + Path.GetFullPath(asmFile) + "\" -nostartfiles -nodefaultlibs");
+				Environment.GetEnvironmentVariable("CROSS_COMPILE") + "gcc",
+				"-x assembler-with-cpp \"" + Path.GetFullPath(asmFile) + "\" -nostartfiles -nodefaultlibs");
 
 			if (!File.Exists(PathHelper.Combine(workingDirectory, "a.out")))
 			{
@@ -32,7 +33,9 @@ namespace ISAGenericTestSuiteRunner
 			}
 
 			Logger.Instance.WriteVerbose("Generating binary output from elf");
-			ProcessHelper.ExecuteProcess(workingDirectory, "avr-objcopy", "-O binary a.out a.bin");
+			ProcessHelper.ExecuteProcess(workingDirectory,
+				Environment.GetEnvironmentVariable("CROSS_COMPILE") + "objcopy",
+				"-O binary a.out a.bin");
 
 			Logger.Instance.WriteVerbose("Reading in binary machine code");
 			MemoryStream stream = new MemoryStream();
