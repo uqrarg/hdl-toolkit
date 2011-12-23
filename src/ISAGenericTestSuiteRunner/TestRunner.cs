@@ -22,8 +22,8 @@ namespace ISAGenericTestSuiteRunner
 
 		// Paths
 		private string workingDirectory;
-		private string avrLibPath;
-		private string avrTestPath;
+		private string isagLibPath;
+		private string isagTestPath;
 		private string pregenPrjFile;
 		private string fileTest;
 		private string fileTemplate;
@@ -62,11 +62,11 @@ namespace ISAGenericTestSuiteRunner
 		{
 			workingDirectory = SystemHelper.GetTemporaryDirectory();
 
-			avrLibPath = Repository.GetLibraryDefaultRootPath("avr_core_v1_00_a");
-			avrTestPath = PathHelper.Combine(avrLibPath, "test");
-			pregenPrjFile = PathHelper.Combine(avrTestPath, "simulation.prj");
+			isagLibPath = Repository.GetLibraryDefaultRootPath("isa_generic_v2_00_a");
+			isagTestPath = PathHelper.Combine(isagLibPath, "test");
+			pregenPrjFile = PathHelper.Combine(isagTestPath, "simulation.prj");
 			fileTest = TestBenchPath;
-			fileTemplate = PathHelper.Combine(avrTestPath, "avr_proc_exec_test_template.vhd");
+			fileTemplate = PathHelper.Combine(isagTestPath, "proc_exec_test_template.vhd");
 			fileTemplateBuilt = PathHelper.Combine(workingDirectory, "testbench.vhd");
 		}
 
@@ -83,12 +83,12 @@ namespace ISAGenericTestSuiteRunner
 			// Manually generate the prj file
 			string prjFile = File.ReadAllText(pregenPrjFile);
 			string prjFileGen = PathHelper.Combine(workingDirectory, "prj.prj");
-			prjFile = prjFile + Environment.NewLine + string.Format("vhdl avr_core_v1_00_a \"{0}\"", fileTemplateBuilt) + Environment.NewLine;
+			prjFile = prjFile + Environment.NewLine + string.Format("vhdl isa_generic_v2_00_a \"{0}\"", fileTemplateBuilt) + Environment.NewLine;
 			File.WriteAllText(prjFileGen, prjFile);
 
 			Logger.Instance.WriteVerbose("Building Simulation");
 			// Build the isim exe
-			FuseBuild.BuildResult result = FuseBuild.BuildProject(workingDirectory, prjFileGen, "avr_core_v1_00_a.avr_proc_exec_test");
+			FuseBuild.BuildResult result = FuseBuild.BuildProject(workingDirectory, prjFileGen, "isa_generic_v2_00_a.proc_exec_test");
 			simulationExe = result.ExecutableFile;
 		}
 

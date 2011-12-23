@@ -81,7 +81,7 @@ namespace ISAGenericTestSuiteRunner
 			// terminate array
 			data.AppendLine("ipif_addr_data_pair_format(x\"FFFF\", x\"0000\")");
 
-			return template.Replace("#DATAARRAY", data.ToString());
+			return template.Replace("##DATAARRAY", data.ToString());
 		}
 	}
 }
