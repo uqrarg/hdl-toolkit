@@ -59,30 +59,35 @@ namespace ISAGenericTestSuiteRunner
 
 			Logger.Instance.WriteVerbose("Generating VHDL Testbench");
 
+			//FIXME: these should be command line arguments and not environment variables
+			int numBytesPerBlock = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_INSTR_SIZE_BYTES"));
+			int addrStride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
+			bool bigEndian = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_BIG_ENDIAN")) == 1;
+			string fmt = "X" + (numBytesPerBlock * 2);
+			
 			code.Seek(0, SeekOrigin.Begin);
 
 			int currentBlockIndex = 0;
-			int currentBlock = 0;
+			ulong currentBlock = 0;
 			int currentData = 0;
 			while ((currentData = code.ReadByte()) != -1)
 			{
-				if (currentBlockIndex == 0)
-				{
-					currentBlockIndex = 1;
-					// 
-					currentBlock = currentData;
-				}
-				else
+				//assumes little endian
+				currentBlock = bigEndian ?
+					(currentBlock << 8) | (ulong)currentData :
+					(currentBlock >> 8) | ((ulong)currentData << ((numBytesPerBlock-1) * 8));
+				currentBlockIndex++;
+				if (currentBlockIndex == numBytesPerBlock)
 				{
 					currentBlockIndex = 0;
-					currentBlock |= currentData << 8;
-					data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X4}\", x\"{1:X4}\"),", currentAddress, currentBlock));
-					currentAddress += 2;
+					data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1:"+fmt+"}\"),", currentAddress, currentBlock));
+					currentAddress += addrStride;
+					currentBlock = 0;
 				}
 			}
 
-			// terminate array
-			data.AppendLine("ipif_addr_data_pair_format(x\"FFFF\", x\"0000\")");
+			// FIXME: this is a hack because of VHDLs inability to support single element arrays?
+			data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1:"+fmt+"}\")", -1, 0));
 
 			return template.Replace("##DATAARRAY", data.ToString());
 		}
