@@ -11,6 +11,7 @@ namespace ISAGenericTestSuiteRunner
 {
 	public class TestBench
 	{
+		private int Stride;
 		public class Assertion
 		{
 			
@@ -37,6 +38,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public TestBench()
 		{
+			Stride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
 			instructionsList = new List<string>();
 			commands = new List<TestCommand>();
 		}
@@ -52,7 +54,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public void RunAssertions(ProcessorState state)
 		{
-			int nextPhysicalPC = state.Pipeline[1].Value / 4;
+			int nextPhysicalPC = state.Pipeline[1].Value / Stride;
 
 			// find all commands to be made
 			foreach (TestCommand c in commands)
