@@ -10,8 +10,11 @@ namespace ISAGenericTestSuiteRunner
 	{
 		public ISimSimulator Simulator { get; set; }
 
+		private int WordSize;
+
 		public Processor(ISimSimulator sim)
 		{
+			WordSize = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE"));
 			Simulator = sim;
 		}
 
@@ -42,9 +45,10 @@ namespace ISAGenericTestSuiteRunner
 
 		public int GetRegister(int index)
 		{
+			//FIXME: get rid of hardcoded 32 regsiters stuff
 			if (index <= 31)
 			{
-				return (int)(Simulator.GetSignalState("UUT/gprf/ISO_REG_FILE_INST/ram(" + index.ToString() + ")(7:0)").Flip().ToLong());
+				return (int)(Simulator.GetSignalState("UUT/gprf/ISO_REG_FILE_INST/ram(" + index.ToString() + ")("+ (WordSize - 1) + ":0)").Flip().ToLong());
 			}
 			throw new ArgumentOutOfRangeException("Only 32 registers (0-31)");
 		}
