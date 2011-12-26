@@ -115,7 +115,7 @@ namespace ISAGenericTestSuiteRunner
 
 			foreach (string i in instructionsList)
 			{
-				builder.AppendLine(i + "   ; INSTRUCTION " + instruction++.ToString());
+				builder.AppendLine(i + "   // INSTRUCTION " + instruction++.ToString());
 			}
 
 			return builder.ToString();
