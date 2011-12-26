@@ -44,8 +44,10 @@ namespace ISAGenericTestSuiteRunner
 
 				if (!passed)
 				{
-					Logger.Instance.WriteError("Assertion failed 0x{0:X4}@{1}, '{2}' <> '{3} {4} {5}'",
-						Address * 2, CyclesAfterEvent, Parameters,
+					int stride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
+					string fmt = "X" + (Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE")) / 4);
+					Logger.Instance.WriteError("Assertion failed 0x{0:"+fmt+"}@{1}, '{2}' <> '{3:"+fmt+"} {4} {5:"+fmt+"}'",
+						Address * stride, CyclesAfterEvent, Parameters,
 						GetValueForString(a, state), op, GetValueForString(b, state));
 				}
 
