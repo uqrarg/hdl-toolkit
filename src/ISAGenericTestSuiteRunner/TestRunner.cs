@@ -145,7 +145,7 @@ namespace ISAGenericTestSuiteRunner
 					simulator.WaitForExit();
 				}
 			}
-			catch (Exception ex)
+			catch
 			{
 				// In the event of an exception clean up the output
 				PrintState(true);

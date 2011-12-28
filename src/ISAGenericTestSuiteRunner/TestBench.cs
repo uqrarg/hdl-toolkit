@@ -137,14 +137,18 @@ namespace ISAGenericTestSuiteRunner
 						if (!string.IsNullOrEmpty(line))
 						{
 							if (ParseCommand(line, bench))
+							{
 								continue;
+							}
 							if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
 							{
 								Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
 								continue;
 							}
 							if (line.StartsWith("##"))
+							{
 								continue;
+							}
 							bench.instructionsList.Add(line);
 							bench.instructionsCount++;
 						}
@@ -166,16 +170,13 @@ namespace ISAGenericTestSuiteRunner
 				// #type@cycleoffset(parameters)
 
 				string type = m.Groups["command"].Value.ToLower();
+				string cycles = m.Groups["cycles"].Value;
 				string content = m.Groups["content"].Value;
 
-				int cycles = 1;
-				if (!string.IsNullOrEmpty(m.Groups["cycles"].Value))
+				int cyclesOffset = 1;
+				if (!string.IsNullOrEmpty(cycles) && !int.TryParse(cycles, out cyclesOffset))
 				{
-					if (!int.TryParse(m.Groups["cycles"].Value, out cycles))
-					{
-						//FIXME: print a warning or error message here
-						return true;
-					}
+					throw new Exception(string.Format("Invalid integer '{0}' in command '{1}'", cycles, command));
 				}
 
 				// Determine actual command class
@@ -183,19 +184,26 @@ namespace ISAGenericTestSuiteRunner
 				switch (type)
 				{
 					case "end":
-						cmd = new EndTestCommand(bench.instructionsCount, cycles, content); break;
+						cmd = new EndTestCommand(bench.instructionsCount, cyclesOffset, content);
+						break;
 					case "assert":
-						cmd = new AssertTestCommand(bench.instructionsCount, cycles, content); break;
+						cmd = new AssertTestCommand(bench.instructionsCount, cyclesOffset, content);
+						break;
 					case "skip":
-						bench.instructionsCount += cycles; break;
+						bench.instructionsCount += cyclesOffset;
+						break;
 					default:
-						//FIXME: add warning or error message
-						return true;
+						throw new Exception(string.Format("Invalid type '{0}' in command '{1}'", type, command));
 				}
+				
 				if (cmd != null)
+				{
 					bench.commands.Add(cmd);
+				}
 				return true;
-			} else {
+			}
+			else
+			{
 				return false;
 			}
 		}
