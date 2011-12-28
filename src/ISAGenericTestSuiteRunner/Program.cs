@@ -57,8 +57,17 @@ namespace ISAGenericTestSuiteRunner
 
 			XilinxRepository repo = new XilinxRepository();
 			repo.AddSearchPath(PathHelper.Combine(XilinxHelper.GetRootXilinxPath(), "EDK", "hw"));
-			//FIXME: remove this hardcoded nastiness
-			repo.AddSearchPath(@"/home/peterc/Petalogix/Internal/plgx_install/peterc-uqrarg/hardware/Repo");
+			string environRepos = Environment.GetEnvironmentVariable("REPOSITORY");
+			if (!string.IsNullOrEmpty(environRepos))
+			{
+				string[] paths = environRepos.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+				foreach (string path in paths)
+				{
+					string fullPath = Path.GetFullPath(path.Trim('"'));
+					Logger.Instance.WriteVerbose("Repository: Adding {0}", fullPath);
+					repo.AddSearchPath(fullPath);
+				}
+			}
 
 			string testRoot = PathHelper.Combine(repo.GetLibraryDefaultRootPath("isa_generic_v2_00_a"), "test");
 
