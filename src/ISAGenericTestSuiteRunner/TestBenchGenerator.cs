@@ -63,31 +63,35 @@ namespace ISAGenericTestSuiteRunner
 			int numBytesPerBlock = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_INSTR_SIZE_BYTES"));
 			int addrStride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
 			bool bigEndian = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_BIG_ENDIAN")) == 1;
-			string fmt = "X" + (numBytesPerBlock * 2);
-			
+
 			code.Seek(0, SeekOrigin.Begin);
 
 			int currentBlockIndex = 0;
-			ulong currentBlock = 0;
+			byte[] currentBlock = new byte[numBytesPerBlock];
 			int currentData = 0;
 			while ((currentData = code.ReadByte()) != -1)
 			{
-				//assumes little endian
-				currentBlock = bigEndian ?
-					(currentBlock << 8) | (ulong)currentData :
-					(currentBlock >> 8) | ((ulong)currentData << ((numBytesPerBlock-1) * 8));
-				currentBlockIndex++;
+				// Fill the array from the right to the left (right side = LSB)
+				currentBlock[numBytesPerBlock - ++currentBlockIndex] = (byte)currentData;
+				// Block is complete
 				if (currentBlockIndex == numBytesPerBlock)
 				{
 					currentBlockIndex = 0;
-					data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1:"+fmt+"}\"),", currentAddress, currentBlock));
+
+					// Swap the order for big endian systems
+					if (bigEndian)
+					{
+						Array.Reverse(currentBlock);
+					}
+					data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1}\"),",
+						currentAddress, StringHelpers.BytesToString(currentBlock, 0, numBytesPerBlock)));
 					currentAddress += addrStride;
-					currentBlock = 0;
 				}
 			}
 
 			// FIXME: this is a hack because of VHDLs inability to support single element arrays?
-			data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1:"+fmt+"}\")", -1, 0));
+			data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1}\")",
+				-1, StringHelpers.BytesToString(new byte[numBytesPerBlock], 0, numBytesPerBlock)));
 
 			return template.Replace("##DATAARRAY", data.ToString());
 		}
