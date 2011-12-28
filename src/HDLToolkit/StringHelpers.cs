@@ -38,5 +38,22 @@ namespace HDLToolkit
 		{
 			public override Encoding Encoding { get { return Encoding.UTF8; } }
 		}
+
+		/// <summary>
+		/// Converts an array of byte values into a string of the values in hexadecimal notation.
+		/// </summary>
+		/// <param name="values">An array of values for each byte</param>
+		/// <param name="offset">Start of the values in the array</param>
+		/// <param name="length">How many bytes in length (including the offset)</param>
+		/// <returns></returns>
+		public static string BytesToString(byte[] values, int offset, int length)
+		{
+			StringBuilder builder = new StringBuilder();
+			for (int i = offset; i < offset + length; i++)
+			{
+				builder.AppendFormat("{0:X2}", values[i]);
+			}
+			return builder.ToString();
+		}
 	}
 }
