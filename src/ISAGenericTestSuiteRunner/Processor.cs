@@ -11,10 +11,14 @@ namespace ISAGenericTestSuiteRunner
 		public ISimSimulator Simulator { get; set; }
 
 		private int WordSize;
+		private int NumGpRegisters;
+		private int NumSpRegisters;
 
 		public Processor(ISimSimulator sim)
 		{
 			WordSize = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE"));
+			NumGpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_GPR"));
+			NumSpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_SPR"));
 			Simulator = sim;
 		}
 
@@ -22,35 +26,21 @@ namespace ISAGenericTestSuiteRunner
 		{
 			ProcessorState state = new ProcessorState();
 
-			state.Pipeline = new ProcessorState.ProgramCounterState[2];
+			state.pc = (int)(Simulator.GetSignalState("UUT/pcs(1)").Flip().ToLong()); // current PC
 
-			state.Pipeline[0].Valid = ((Simulator.GetSignalState("UUT/instr_valid(1)").ToLong()) > 0); // current Valid
-			state.Pipeline[0].Value = (int)(Simulator.GetSignalState("UUT/pcs(1)").Flip().ToLong()); // current PC
-
-			state.Pipeline[1].Valid = ((Simulator.GetSignalState("UUT/instr_valid(0)").ToLong()) > 0); // next Valid
-			state.Pipeline[1].Value = (int)(Simulator.GetSignalState("UUT/pcs(0)").Flip().ToLong()); // next PC
-
-			state.PipelineBusy = !state.Pipeline[0].Valid; // pipeline busy fetching a valid instruction
-
-			state.StatusRegister = (int)(Simulator.GetSignalState("UUT/exec_1.rs(0)").Flip().ToLong()); // status register
-
-			state.Registers = new int[32];
-			for (int i = 0; i < 32; i++)
-			{
-				state.Registers[i] = GetRegister(i);
+			state.GpRegisters = new int[NumGpRegisters];
+			state.SpRegisters = new int[NumSpRegisters];
+			for (int i = 0; i < NumGpRegisters; i++)
+				state.GpRegisters[i] = (int)(Simulator.GetSignalState(
+					//FIXME: macroify or global variableify UUT somwehere
+					"UUT/gprf/ISO_REG_FILE_INST/ram(" + i + ")(" + (WordSize - 1) + ":0)"
+				).Flip().ToLong());
+			for (int i = 0; i < NumSpRegisters; i++) {
+				state.SpRegisters[i] = (int)(Simulator.GetSignalState(
+					"UUT/state_1.rs(" + i + ")(" + (WordSize - 1) + ":0)"
+				).Flip().ToLong());
 			}
-
 			return state;
-		}
-
-		public int GetRegister(int index)
-		{
-			//FIXME: get rid of hardcoded 32 regsiters stuff
-			if (index <= 31)
-			{
-				return (int)(Simulator.GetSignalState("UUT/gprf/ISO_REG_FILE_INST/ram(" + index.ToString() + ")("+ (WordSize - 1) + ":0)").Flip().ToLong());
-			}
-			throw new ArgumentOutOfRangeException("Only 32 registers (0-31)");
 		}
 
 		public void RunCycle()
@@ -62,13 +52,8 @@ namespace ISAGenericTestSuiteRunner
 		{
 			while (true)
 			{
-				bool nextValid = ((Simulator.GetSignalState("UUT/instr_valid(0)").ToLong()) > 0);
-
-				if (nextValid)
-				{
+				if (((Simulator.GetSignalState("UUT/instr_valid(1)").ToLong()) > 0))
 					return;
-				}
-
 				RunCycle();
 			}
 		}

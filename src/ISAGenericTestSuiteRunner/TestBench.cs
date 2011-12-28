@@ -14,7 +14,7 @@ namespace ISAGenericTestSuiteRunner
 		private int Stride;
 
 		private List<string> instructionsList;
-		private int instructionsCount = 0;
+		private int instructionsCount = -1;
 
 		private List<TestCommand> commands;
 
@@ -52,7 +52,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public void RunAssertions(ProcessorState state)
 		{
-			int nextPhysicalPC = state.Pipeline[1].Value / Stride;
+			int nextPhysicalPC = state.pc / Stride;
 
 			// find all commands to be made
 			foreach (TestCommand c in commands)
@@ -143,6 +143,8 @@ namespace ISAGenericTestSuiteRunner
 								Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
 								continue;
 							}
+							if (line.StartsWith("##"))
+								continue;
 							bench.instructionsList.Add(line);
 							bench.instructionsCount++;
 						}
@@ -166,7 +168,7 @@ namespace ISAGenericTestSuiteRunner
 				string type = m.Groups["command"].Value.ToLower();
 				string content = m.Groups["content"].Value;
 
-				int cycles = 0;
+				int cycles = 1;
 				if (!string.IsNullOrEmpty(m.Groups["cycles"].Value))
 				{
 					if (!int.TryParse(m.Groups["cycles"].Value, out cycles))

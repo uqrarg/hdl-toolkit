@@ -106,6 +106,9 @@ namespace ISAGenericTestSuiteRunner
 
 			// Start
 			simulator.Start();
+			//Advance the time just a fraction past the clock edge
+			//FIXME: move this somewhere more sensible
+			simulator.RunFor(1);
 		}
 
 		public void Run()
@@ -119,12 +122,12 @@ namespace ISAGenericTestSuiteRunner
 
 				if (!GuiEnabled)
 				{
-					// Run until the first instruction is next
-					proc.RunToNextValidInstruction();
 
 					// Process test bench
 					while (true)
 					{
+						// Run until the first instruction is next
+						proc.RunToNextValidInstruction();
 						ProcessorState state = proc.GetCurrentState();
 						bench.RunAssertions(state);
 
@@ -132,7 +135,6 @@ namespace ISAGenericTestSuiteRunner
 						{
 							break;
 						}
-
 						proc.RunCycle();
 					}
 				}

@@ -58,57 +58,74 @@ namespace ISAGenericTestSuiteRunner
 			Console.WriteLine("Malformed assertion! '{0}'", Parameters);
 		}
 
-		Regex register = new Regex(@"^r(?<index>\d{1,2})", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		Regex register = new Regex(@"^(?<rtype>.)(?<index>\d{1,2})(\[(?<range>.*?)\])?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		Regex range = new Regex(@"(?<start>\d{1,2})(:(?<end>\d{1,2}))?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 		public int GetValueForString(string str, ProcessorState state)
 		{
+			Exception err = new Exception("parsing exception - bad token: " + str);
 			Match m = register.Match(str);
 			if (m.Success)
 			{
 				int i = int.Parse(m.Groups["index"].Value);
-				return state.Registers[i];
+				char rt = m.Groups["rtype"].Value.ElementAt(0);
+				int w = 0;
+				switch (rt) {
+				case ('r') :
+					w = state.GpRegisters[i]; break;
+				case ('s') :
+					w = state.SpRegisters[i]; break;
+				default :
+					throw err;
+				}
+
+				string rangeStr = m.Groups["range"].Value;
+				if (!string.IsNullOrEmpty(rangeStr)) {
+					Match k = range.Match(rangeStr);
+					if (!k.Success) {
+						throw err;
+					}
+					int start = int.Parse(k.Groups["start"].Value);
+					string endStr = k.Groups["end"].Value;
+					int end = start;
+					if (!string.IsNullOrEmpty(endStr))
+						end = int.Parse(endStr);
+					return (w >> end) &  ((1 << (start - end + 1)) - 1);
+				} else {
+					return w;
+				}
 			}
 
+			//FIXME: delete avr specific stuff
 			if (str.StartsWith("sreg", StringComparison.InvariantCultureIgnoreCase))
 			{
 				string strToLower = str.ToLower();
 				switch (strToLower)
 				{
 					case "sreg":
-						return state.StatusRegister;
+						return state.SpRegisters[0];
 					case "sreg[c]": // carry
-						return (state.StatusRegister >> 0) & 0x1;
+						return (state.SpRegisters[0] >> 0) & 0x1;
 					case "sreg[z]": // zero
-						return (state.StatusRegister >> 1) & 0x1;
+						return (state.SpRegisters[0] >> 1) & 0x1;
 					case "sreg[n]": // negative
-						return (state.StatusRegister >> 2) & 0x1;
+						return (state.SpRegisters[0] >> 2) & 0x1;
 					case "sreg[v]": // twos comp (v)
-						return (state.StatusRegister >> 3) & 0x1;
+						return (state.SpRegisters[0] >> 3) & 0x1;
 					case "sreg[s]": // signed
-						return (state.StatusRegister >> 4) & 0x1;
+						return (state.SpRegisters[0] >> 4) & 0x1;
 					case "sreg[h]": // half carry
-						return (state.StatusRegister >> 5) & 0x1;
+						return (state.SpRegisters[0] >> 5) & 0x1;
 					case "sreg[t]": // temp/transfer
-						return (state.StatusRegister >> 6) & 0x1;
+						return (state.SpRegisters[0] >> 6) & 0x1;
 					case "sreg[i]": // instruction
-						return (state.StatusRegister >> 7) & 0x1;
+						return (state.SpRegisters[0] >> 7) & 0x1;
 					default:
 						break;
 				}
 			}
 
 			if (str.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase))
-			{
-				string strToLower = str.ToLower();
-				switch (strToLower)
-				{
-					case "pc":
-						return state.Pipeline[0].Value;
-					case "pcvalid":
-						return (state.Pipeline[0].Valid) ? 1 : 0;
-					default:
-						break;
-				}
-			}
+				return state.pc;
 
 			int value = 0;
 			if (int.TryParse(str, out value))
@@ -130,7 +147,7 @@ namespace ISAGenericTestSuiteRunner
 				return valueBool ? 1 : 0;
 			}
 
-			throw new Exception("parsing exception?");
+			throw err;
 			// unknown
 			return -1;
 		}

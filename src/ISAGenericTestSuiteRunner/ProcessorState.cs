@@ -14,11 +14,10 @@ namespace ISAGenericTestSuiteRunner
 			public bool Valid { get; set; }
 		}
 
-		public ProgramCounterState[] Pipeline { get; set; }
-		public bool PipelineBusy { get; set; }
+		public int pc;
 
-		public int[] Registers { get; set; }
-		public int StatusRegister { get; set; }
+		public int[] GpRegisters { get; set; }
+		public int[] SpRegisters { get; set; }
 
 		public ProcessorState()
 		{
