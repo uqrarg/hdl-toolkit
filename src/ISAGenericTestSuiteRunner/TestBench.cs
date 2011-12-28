@@ -14,6 +14,7 @@ namespace ISAGenericTestSuiteRunner
 		private int Stride;
 
 		private List<string> instructionsList;
+
 		private List<TestCommand> commands;
 
 		public int failedAssertions = 0;
@@ -134,23 +135,20 @@ namespace ISAGenericTestSuiteRunner
 
 						if (!string.IsNullOrEmpty(line))
 						{
-							if (line.StartsWith("#"))
+
+							TestCommand command = ParseCommand(line, bench.instructionsList.Count);
+							if (command != null)
 							{
-								TestCommand command = ParseCommand(line, bench.instructionsList.Count);
-								if (command != null)
-								{
-									Logger.Instance.WriteDebug("Add {0}::'{1}'", command.GetType().ToString(), command.Parameters);
-									bench.commands.Add(command);
-								}
-								else if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
-								{
-									Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
-								}
+								Logger.Instance.WriteDebug("Add {0}::'{1}'", command.GetType().ToString(), command.Parameters);
+								bench.commands.Add(command);
+								continue;
 							}
-							else
+							if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
 							{
-								bench.instructionsList.Add(line);
+								Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
+								continue;
 							}
+							bench.instructionsList.Add(line);
 						}
 					}
 				}
