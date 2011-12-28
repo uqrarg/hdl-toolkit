@@ -12,10 +12,6 @@ namespace ISAGenericTestSuiteRunner
 	public class TestBench
 	{
 		private int Stride;
-		public class Assertion
-		{
-			
-		}
 
 		private List<string> instructionsList;
 		private List<TestCommand> commands;
