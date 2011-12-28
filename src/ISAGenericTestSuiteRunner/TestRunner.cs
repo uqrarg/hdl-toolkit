@@ -80,15 +80,17 @@ namespace ISAGenericTestSuiteRunner
 			// Generate test bench vhdl
 			File.WriteAllText(fileTemplateBuilt, TestBenchGenerator.GenerateTestBench(bench, workingDirectory, fileTemplate));
 
-			// Manually generate the prj file
-			string prjFile = File.ReadAllText(pregenPrjFile);
-			string prjFileGen = PathHelper.Combine(workingDirectory, "prj.prj");
-			prjFile = prjFile + Environment.NewLine + string.Format("vhdl isa_generic_v2_00_a \"{0}\"", fileTemplateBuilt) + Environment.NewLine;
-			File.WriteAllText(prjFileGen, prjFile);
+			// Automatically Generate the prj file
+			string prjFilePath = PathHelper.Combine(workingDirectory, "prj.prj");
+			PrjFile prjFile = new PrjFile(Repository);
+			prjFile.AddAllInLibrary(Repository.GetLibrary("isa_generic_v2_00_a"));
+			string prjFileContents = prjFile.ToString() + Environment.NewLine + 
+				string.Format("vhdl isa_generic_v2_00_a \"{0}\"", fileTemplateBuilt) + Environment.NewLine;
+			File.WriteAllText(prjFilePath, prjFileContents);
 
 			Logger.Instance.WriteVerbose("Building Simulation");
 			// Build the isim exe
-			FuseBuild.BuildResult result = FuseBuild.BuildProject(workingDirectory, prjFileGen, "isa_generic_v2_00_a.proc_exec_test");
+			FuseBuild.BuildResult result = FuseBuild.BuildProject(workingDirectory, prjFilePath, "isa_generic_v2_00_a.proc_exec_test");
 			simulationExe = result.ExecutableFile;
 		}
 
