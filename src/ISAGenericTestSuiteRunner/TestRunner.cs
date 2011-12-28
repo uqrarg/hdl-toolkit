@@ -167,7 +167,7 @@ namespace ISAGenericTestSuiteRunner
 		{
 			Console.CursorLeft = Console.WindowWidth - 12;
 			Console.Write(" [ ");
-			if (test.failedAssertions > 0 || test.passedAssertions == 0 || forceFailed)
+			if (test == null || test.failedAssertions > 0 || test.passedAssertions == 0 || forceFailed)
 			{
 				using (new ConsoleColorScope(ConsoleColor.Red))
 				{
