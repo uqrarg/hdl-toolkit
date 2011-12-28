@@ -14,6 +14,7 @@ namespace ISAGenericTestSuiteRunner
 		private int Stride;
 
 		private List<string> instructionsList;
+		private int instructionsCount = 0;
 
 		private List<TestCommand> commands;
 
@@ -135,20 +136,15 @@ namespace ISAGenericTestSuiteRunner
 
 						if (!string.IsNullOrEmpty(line))
 						{
-
-							TestCommand command = ParseCommand(line, bench.instructionsList.Count);
-							if (command != null)
-							{
-								Logger.Instance.WriteDebug("Add {0}::'{1}'", command.GetType().ToString(), command.Parameters);
-								bench.commands.Add(command);
+							if (ParseCommand(line, bench))
 								continue;
-							}
 							if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
 							{
 								Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
 								continue;
 							}
 							bench.instructionsList.Add(line);
+							bench.instructionsCount++;
 						}
 					}
 				}
@@ -158,11 +154,12 @@ namespace ISAGenericTestSuiteRunner
 		}
 
 		private static Regex commandRegex = new Regex(@"#(?<command>.*?)(@(?<cycles>.*?))?\((?<content>.*?)\)", RegexOptions.IgnoreCase);
-		private static TestCommand ParseCommand(string command, int address)
+		private static bool ParseCommand(string command, TestBench bench)
 		{
 			Match m = commandRegex.Match(command);
 			if (m.Success)
 			{
+				Logger.Instance.WriteDebug("Command:" + command);
 				// Standard command
 				// #type@cycleoffset(parameters)
 
@@ -174,22 +171,31 @@ namespace ISAGenericTestSuiteRunner
 				{
 					if (!int.TryParse(m.Groups["cycles"].Value, out cycles))
 					{
-						return null;
+						//FIXME: print a warning or error message here
+						return true;
 					}
 				}
 
 				// Determine actual command class
+				TestCommand cmd = null;
 				switch (type)
 				{
 					case "end":
-						return new EndTestCommand(address, cycles, content);
+						cmd = new EndTestCommand(bench.instructionsCount, cycles, content); break;
 					case "assert":
-						return new AssertTestCommand(address, cycles, content);
+						cmd = new AssertTestCommand(bench.instructionsCount, cycles, content); break;
+					case "skip":
+						bench.instructionsCount += cycles; break;
 					default:
-						return null;
+						//FIXME: add warning or error message
+						return true;
 				}
+				if (cmd != null)
+					bench.commands.Add(cmd);
+				return true;
+			} else {
+				return false;
 			}
-			return null;
 		}
 		#endregion
 	}
