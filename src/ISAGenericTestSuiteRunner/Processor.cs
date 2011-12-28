@@ -26,7 +26,7 @@ namespace ISAGenericTestSuiteRunner
 		{
 			ProcessorState state = new ProcessorState();
 
-			state.pc = (int)(Simulator.GetSignalState("UUT/pcs(1)").Flip().ToLong()); // current PC
+			state.PC = (int)(Simulator.GetSignalState("UUT/pcs(1)").Flip().ToLong()); // current PC
 
 			state.GpRegisters = new int[NumGpRegisters];
 			state.SpRegisters = new int[NumSpRegisters];

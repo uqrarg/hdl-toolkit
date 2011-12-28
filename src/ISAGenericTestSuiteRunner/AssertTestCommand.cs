@@ -125,7 +125,7 @@ namespace ISAGenericTestSuiteRunner
 			}
 
 			if (str.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase))
-				return state.pc;
+				return state.PC;
 
 			int value = 0;
 			if (int.TryParse(str, out value))

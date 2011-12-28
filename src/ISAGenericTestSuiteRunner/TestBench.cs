@@ -52,7 +52,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public void RunAssertions(ProcessorState state)
 		{
-			int nextPhysicalPC = state.pc / Stride;
+			int nextPhysicalPC = state.PC / Stride;
 
 			// find all commands to be made
 			foreach (TestCommand c in commands)

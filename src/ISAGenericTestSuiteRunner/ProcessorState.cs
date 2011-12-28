@@ -14,7 +14,7 @@ namespace ISAGenericTestSuiteRunner
 			public bool Valid { get; set; }
 		}
 
-		public int pc;
+		public int PC { get; set; }
 
 		public int[] GpRegisters { get; set; }
 		public int[] SpRegisters { get; set; }
