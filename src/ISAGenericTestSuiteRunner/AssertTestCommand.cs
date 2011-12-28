@@ -58,41 +58,13 @@ namespace ISAGenericTestSuiteRunner
 			Console.WriteLine("Malformed assertion! '{0}'", Parameters);
 		}
 
-		Regex register = new Regex(@"^(?<rtype>.)(?<index>\d{1,2})(\[(?<range>.*?)\])?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-		Regex range = new Regex(@"(?<start>\d{1,2})(:(?<end>\d{1,2}))?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		
 		public int GetValueForString(string str, ProcessorState state)
 		{
-			Exception err = new Exception("parsing exception - bad token: " + str);
-			Match m = register.Match(str);
-			if (m.Success)
+			int value = 0;
+			if (TryParseRegisterOperand(str, state, out value))
 			{
-				int i = int.Parse(m.Groups["index"].Value);
-				char rt = m.Groups["rtype"].Value.ElementAt(0);
-				int w = 0;
-				switch (rt) {
-				case ('r') :
-					w = state.GpRegisters[i]; break;
-				case ('s') :
-					w = state.SpRegisters[i]; break;
-				default :
-					throw err;
-				}
-
-				string rangeStr = m.Groups["range"].Value;
-				if (!string.IsNullOrEmpty(rangeStr)) {
-					Match k = range.Match(rangeStr);
-					if (!k.Success) {
-						throw err;
-					}
-					int start = int.Parse(k.Groups["start"].Value);
-					string endStr = k.Groups["end"].Value;
-					int end = start;
-					if (!string.IsNullOrEmpty(endStr))
-						end = int.Parse(endStr);
-					return (w >> end) &  ((1 << (start - end + 1)) - 1);
-				} else {
-					return w;
-				}
+				return value;
 			}
 
 			//FIXME: delete avr specific stuff
@@ -125,14 +97,17 @@ namespace ISAGenericTestSuiteRunner
 			}
 
 			if (str.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase))
+			{
 				return state.PC;
+			}
 
-			int value = 0;
+			// Parse for a regular integer
 			if (int.TryParse(str, out value))
 			{
 				return value;
 			}
 
+			// Parse for a hexadecimal value
 			if (str.StartsWith("0x"))
 			{
 				if (int.TryParse(str.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out value))
@@ -147,9 +122,70 @@ namespace ISAGenericTestSuiteRunner
 				return valueBool ? 1 : 0;
 			}
 
-			throw err;
-			// unknown
-			return -1;
+			// Unknown value
+			throw new Exception("Parsing exception - bad token: " + str);
+		}
+
+		private static Regex register = new Regex(@"^(?<type>.)(?<index>\d+)(\[(?<start>\d{1,2})(:(?<end>\d{1,2}))?\])?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+		public static bool TryParseRegisterOperand(string operand, ProcessorState state, out int value)
+		{
+			Match m = register.Match(operand);
+			if (m.Success)
+			{
+				int index = 0;
+				string registerType = m.Groups["type"].Value;
+				bool registerValid = false;
+				int registerValue = 0;
+
+				if (int.TryParse(m.Groups["index"].Value, out index))
+				{
+					switch (registerType)
+					{
+						case "r":
+							if (index < state.GpRegisters.Length)
+							{
+								registerValue = state.GpRegisters[index];
+								registerValid = true;
+							}
+							break;
+						case "s":
+							if (index < state.SpRegisters.Length)
+							{
+								registerValue = state.SpRegisters[index];
+								registerValid = true;
+							}
+							break;
+					}
+
+					if (registerValid)
+					{
+						// Parse the start index
+						int rangeStart = 0;
+						bool indexSpecified = (m.Groups["start"] != null && !string.IsNullOrEmpty(m.Groups["start"].Value));
+						bool indexValid = int.TryParse(m.Groups["start"].Value, out rangeStart);
+						// Parse the end index
+						int rangeEnd = 0;
+						bool rangeSpecified = (m.Groups["end"] != null && !string.IsNullOrEmpty(m.Groups["end"].Value));
+						bool rangeValid = int.TryParse(m.Groups["end"].Value, out rangeEnd);
+
+						if (!indexSpecified)
+						{
+							value = registerValue;
+							return true;
+						}
+						else if (indexSpecified && indexValid && rangeSpecified && rangeValid)
+						{
+							// Shift it down and Mask the range
+							// TODO: make this work for reversed ranges and single index ranges
+							value = (registerValue >> rangeEnd) & ((1 << (rangeStart - rangeEnd + 1)) - 1);
+							return true;
+						}
+					}
+				}
+			}
+
+			value = 0;
+			return false;
 		}
 	}
 }
