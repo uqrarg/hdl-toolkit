@@ -136,16 +136,19 @@ namespace ISAGenericTestSuiteRunner
 
 						if (!string.IsNullOrEmpty(line))
 						{
-							if (ParseCommand(line, bench))
-							{
-								continue;
-							}
+							// Ignore comments, and print a warning for ##todo statements
 							if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
 							{
 								Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
 								continue;
 							}
 							if (line.StartsWith("##"))
+							{
+								continue;
+							}
+
+							// Parse the command
+							if (ParseCommand(line, bench))
 							{
 								continue;
 							}
