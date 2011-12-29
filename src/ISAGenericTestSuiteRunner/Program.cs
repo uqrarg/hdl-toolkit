@@ -33,14 +33,15 @@ namespace ISAGenericTestSuiteRunner
 		{
 			bool debugEnable = false;
 			bool guiEnable = false;
-			bool aliasArg = false;
+			bool includeArg = false;
 			List<string> files = new List<string>();
+			List<string> testBenchIncludes = new List<string>();
 			foreach (string a in args)
 			{
-				if (aliasArg)
+				if (includeArg)
 				{
-					aliasArg = false;
-					AssertTestCommand.addAliasSet(a);
+					includeArg = false;
+					testBenchIncludes.Add(a);
 				}
 				else if (string.Compare(a, "-d", true) == 0)
 				{
@@ -50,9 +51,9 @@ namespace ISAGenericTestSuiteRunner
 				{
 					guiEnable = true;
 				}
-				else if (string.Compare(a, "-a", true) == 0)
+				else if (string.Compare(a, "-I", true) == 0)
 				{
-					aliasArg = true;
+					includeArg = true;
 				}
 				else
 				{
@@ -94,6 +95,7 @@ namespace ISAGenericTestSuiteRunner
 					try
 					{
 						TestRunner runner = new TestRunner(repo, fullFilePath);
+						runner.TestBenchIncludes.AddRange(testBenchIncludes);
 						if (guiEnable)
 						{
 							runner.GuiEnabled = true;
