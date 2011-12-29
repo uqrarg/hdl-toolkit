@@ -20,6 +20,40 @@ namespace ISAGenericTestSuiteRunner
 			return TestBenchTemplate(code, templateFile);
 		}
 
+		public static string PreProcessTestBench(string fileContents, List<string> includeDirectories)
+		{
+			Logger.Instance.WriteVerbose("Preprocessing testbench with gcc");
+
+			List<string> arguments = new List<string>();
+			arguments.Add("-E -P -C -w"); // standard preprocessing flags
+			// Include directories
+			foreach (string include in includeDirectories)
+			{
+				arguments.Add("-I" + include);
+			}
+
+			string input = PathHelper.Combine(SystemHelper.GetTemporaryDirectory(), "isag-tb-" + Guid.NewGuid().ToString() + ".S");
+			string output = input + ".e";
+
+			arguments.Add("-x assembler-with-cpp " + input); // file input flags
+			arguments.Add("-o " + output);
+
+			File.WriteAllText(input, fileContents);
+
+			ProcessHelper.ProcessExecutionResult result = ProcessHelper.ExecuteProcess(
+				Environment.CurrentDirectory, Environment.GetEnvironmentVariable("CROSS_COMPILE") + "gcc", arguments);
+
+			Logger.Instance.WriteDebug(result.StandardError);
+			Logger.Instance.WriteDebug(result.StandardOutput);
+
+			string preprocessedContents = File.ReadAllText(output);
+
+			File.Delete(input);
+			File.Delete(output);
+
+			return preprocessedContents;
+		}
+
 		public static MemoryStream GenerateMachineCode(string workingDirectory, string asmFile)
 		{
 			Logger.Instance.WriteVerbose("Generating Machine code from assembly file using gcc");
