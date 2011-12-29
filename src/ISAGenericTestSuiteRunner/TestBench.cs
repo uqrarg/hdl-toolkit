@@ -122,44 +122,63 @@ namespace ISAGenericTestSuiteRunner
 		}
 
 		#region Parsing
-		public static TestBench Load(string file)
+		private static TestBench Load(string fileContents)
 		{
 			TestBench bench = new TestBench();
 
-			using (FileStream stream = new FileStream(file, FileMode.Open, FileAccess.Read))
+			using (StringReader reader = new StringReader(fileContents))
 			{
-				using (StreamReader reader = new StreamReader(stream))
+				string line = null;
+				while ((line = reader.ReadLine()) != null)
 				{
-					while (!reader.EndOfStream)
+					line = line.Trim();
+					if (!string.IsNullOrEmpty(line))
 					{
-						string line = reader.ReadLine().Trim();
-
-						if (!string.IsNullOrEmpty(line))
+						// Ignore comments, and print a warning for ##todo statements
+						if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
 						{
-							// Ignore comments, and print a warning for ##todo statements
-							if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
-							{
-								Logger.Instance.WriteWarning("{0}: {1}", Path.GetFileName(file), line);
-								continue;
-							}
-							if (line.StartsWith("##"))
-							{
-								continue;
-							}
-
-							// Parse the command
-							if (ParseCommand(line, bench))
-							{
-								continue;
-							}
-							bench.instructionsList.Add(line);
-							bench.instructionsCount++;
+							Logger.Instance.WriteWarning("TODO: {1}", line);
+							continue;
 						}
+						if (line.StartsWith("##"))
+						{
+							continue;
+						}
+
+						// Parse the command
+						if (ParseCommand(line, bench))
+						{
+							continue;
+						}
+						bench.instructionsList.Add(line);
+						bench.instructionsCount++;
 					}
 				}
 			}
 
 			return bench;
+		}
+
+		public static TestBench Load(string file, List<string> includeDirectories)
+		{
+			Logger.Instance.WriteDebug("Loading test bench...");
+
+			string testBenchContents = File.ReadAllText(file);
+
+			Logger.Instance.WriteDebug("Pre-processing test bench...");
+
+			// Preprocessing
+			testBenchContents = TestBenchGenerator.PreProcessTestBench(testBenchContents, includeDirectories);
+
+			Logger.Instance.WriteDebug("Pre-processed test bench == ");
+			Logger.Instance.WriteDebug(testBenchContents.Replace("\n", "\n\t"));
+
+			// If valid, load the test bench
+			if (!string.IsNullOrEmpty(testBenchContents))
+			{
+				return Load(testBenchContents);
+			}
+			return null;
 		}
 
 		private static Regex commandRegex = new Regex(@"#(?<command>.*?)(@(?<cycles>.*?))?\((?<content>.*?)\)", RegexOptions.IgnoreCase);
@@ -189,7 +208,7 @@ namespace ISAGenericTestSuiteRunner
 					case "end":
 						cmd = new EndTestCommand(bench.instructionsCount, cyclesOffset, content);
 						break;
-					case "assert":
+					case "test":
 						cmd = new AssertTestCommand(bench.instructionsCount, cyclesOffset, content);
 						break;
 					case "skip":
