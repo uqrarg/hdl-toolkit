@@ -33,16 +33,26 @@ namespace ISAGenericTestSuiteRunner
 		{
 			bool debugEnable = false;
 			bool guiEnable = false;
+			bool aliasArg = false;
 			List<string> files = new List<string>();
 			foreach (string a in args)
 			{
-				if (string.Compare(a, "-d", true) == 0)
+				if (aliasArg)
+				{
+					aliasArg = false;
+					AssertTestCommand.addAliasSet(a);
+				}
+				else if (string.Compare(a, "-d", true) == 0)
 				{
 					debugEnable = true;
 				}
 				else if (string.Compare(a, "-g", true) == 0)
 				{
 					guiEnable = true;
+				}
+				else if (string.Compare(a, "-a", true) == 0)
+				{
+					aliasArg = true;
 				}
 				else
 				{

@@ -67,35 +67,6 @@ namespace ISAGenericTestSuiteRunner
 				return value;
 			}
 
-			//FIXME: delete avr specific stuff
-			if (str.StartsWith("sreg", StringComparison.InvariantCultureIgnoreCase))
-			{
-				string strToLower = str.ToLower();
-				switch (strToLower)
-				{
-					case "sreg":
-						return state.SpRegisters[0];
-					case "sreg[c]": // carry
-						return (state.SpRegisters[0] >> 0) & 0x1;
-					case "sreg[z]": // zero
-						return (state.SpRegisters[0] >> 1) & 0x1;
-					case "sreg[n]": // negative
-						return (state.SpRegisters[0] >> 2) & 0x1;
-					case "sreg[v]": // twos comp (v)
-						return (state.SpRegisters[0] >> 3) & 0x1;
-					case "sreg[s]": // signed
-						return (state.SpRegisters[0] >> 4) & 0x1;
-					case "sreg[h]": // half carry
-						return (state.SpRegisters[0] >> 5) & 0x1;
-					case "sreg[t]": // temp/transfer
-						return (state.SpRegisters[0] >> 6) & 0x1;
-					case "sreg[i]": // instruction
-						return (state.SpRegisters[0] >> 7) & 0x1;
-					default:
-						break;
-				}
-			}
-
 			if (str.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase))
 			{
 				return state.PC;
@@ -126,9 +97,97 @@ namespace ISAGenericTestSuiteRunner
 			throw new Exception("Parsing exception - bad token: " + str);
 		}
 
+		private class AliasSet {
+
+			private Regex aliasUseRegex;
+			private string register;
+			private Dictionary<string, string> rangeAliases = new Dictionary<string, string>();
+
+			private static Regex aliasArgRegex = new Regex(
+				"(?<alias>.*?)" + "=" + "(?<register>.*?)" + @"\(" + "(?<rangeAliases>.*?)" + @"\)",
+				RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+			private static Regex rangeAliasesRegex = new Regex(
+				@"\(" + "(?<firstRangeAlias>.*?)" + "=" + "(?<firstRangeValue>.*?)" + "(,(?<otherAliases>.*?))?" + @"\)",
+				RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+			public AliasSet(string arg) {
+				Match m = aliasArgRegex.Match(arg);
+				if (!m.Success) {
+					Console.WriteLine("boo");
+				}
+				string aliasUseRegexStr = m.Groups["alias"].Value;
+				aliasUseRegexStr += @"(\[(?<start>.*?)(:(?<end>.*?))?\])?";
+				aliasUseRegex = new Regex(aliasUseRegexStr, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+				register = m.Groups["register"].Value;
+
+				//FIXME: log this on a different verbosity level
+				Console.WriteLine("register alias added: " +
+					m.Groups["alias"].Value + "=" +
+					m.Groups["register"].Value);
+
+				for (
+					Match k = rangeAliasesRegex.Match("(" + m.Groups["rangeAliases"].Value + ")");
+					k.Success;
+					k = rangeAliasesRegex.Match("(" + k.Groups["otherAliases"].Value + ")")
+				) {
+					rangeAliases.Add(
+						k.Groups["firstRangeAlias"].Value,
+						k.Groups["firstRangeValue"].Value);
+
+					Console.WriteLine("\trange alias added: " +
+						k.Groups["firstRangeAlias"].Value + "=" +
+						k.Groups["firstRangeValue"].Value);
+				}
+			}
+
+			public string tryAliasSet(string exp) {
+				Match m = aliasUseRegex.Match(exp);
+				if (!m.Success)
+					return null;
+				string ret = register;
+				string rangeStart = m.Groups["start"] != null ? m.Groups["start"].Value : null;
+				if (!string.IsNullOrEmpty(rangeStart)) {
+					ret += "[";
+					if (rangeAliases.ContainsKey(rangeStart))
+						ret += rangeAliases[rangeStart];
+					else
+						ret += rangeStart;
+					string rangeEnd = m.Groups["end"] != null ? m.Groups["end"].Value : null;
+					if (!string.IsNullOrEmpty(rangeEnd)) {
+						ret += ":";
+						if (rangeAliases.ContainsKey(rangeEnd))
+							ret += rangeAliases[rangeEnd];
+						else
+							ret += rangeEnd;
+					}
+					ret += "]";
+				}
+				return ret;
+			}
+
+		}
+
+		private static List<AliasSet> aliases = new List<AliasSet>();
+
+		public static void addAliasSet(string arg) {
+			aliases.Add(new AliasSet(arg));
+		}
+
+		private static string TryAlias (string operand) {
+			foreach(AliasSet a in aliases) {
+				string r = a.tryAliasSet(operand);
+				if (r != null) {
+					return r;
+				}
+			}
+			return operand;
+		}
+
 		private static Regex register = new Regex(@"^(?<type>.)(?<index>\d+)(\[(?<start>\d{1,2})(:(?<end>\d{1,2}))?\])?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 		public static bool TryParseRegisterOperand(string operand, ProcessorState state, out int value)
 		{
+			operand = TryAlias(operand);
 			Match m = register.Match(operand);
 			if (m.Success)
 			{
@@ -167,16 +226,17 @@ namespace ISAGenericTestSuiteRunner
 						int rangeEnd = 0;
 						bool rangeSpecified = (m.Groups["end"] != null && !string.IsNullOrEmpty(m.Groups["end"].Value));
 						bool rangeValid = int.TryParse(m.Groups["end"].Value, out rangeEnd);
+						rangeEnd = (rangeSpecified && rangeValid) ? rangeEnd : rangeStart;
 
 						if (!indexSpecified)
 						{
 							value = registerValue;
 							return true;
 						}
-						else if (indexSpecified && indexValid && rangeSpecified && rangeValid)
+						else if (indexSpecified && indexValid)
 						{
 							// Shift it down and Mask the range
-							// TODO: make this work for reversed ranges and single index ranges
+							// TODO: make this work for reversed ranges
 							value = (registerValue >> rangeEnd) & ((1 << (rangeStart - rangeEnd + 1)) - 1);
 							return true;
 						}
