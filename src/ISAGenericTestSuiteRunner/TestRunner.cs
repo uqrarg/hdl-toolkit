@@ -13,6 +13,7 @@ namespace ISAGenericTestSuiteRunner
 	public class TestRunner
 	{
 		public string TestBenchPath { get; set; }
+		public List<string> TestBenchIncludes { get; set; }
 		public bool GuiEnabled { get; set; }
 		public XilinxRepository Repository { get; set; }
 
@@ -33,6 +34,7 @@ namespace ISAGenericTestSuiteRunner
 		public TestRunner(XilinxRepository repo, string testBenchPath)
 		{
 			TestBenchPath = testBenchPath;
+			TestBenchIncludes = new List<string>();
 			Repository = repo;
 		}
 
@@ -75,7 +77,7 @@ namespace ISAGenericTestSuiteRunner
 			SetupPaths();
 
 			// Load test bench
-			bench = TestBench.Load(fileTest);
+			bench = TestBench.Load(fileTest, TestBenchIncludes);
 
 			// Generate test bench vhdl
 			File.WriteAllText(fileTemplateBuilt, TestBenchGenerator.GenerateTestBench(bench, workingDirectory, fileTemplate));
