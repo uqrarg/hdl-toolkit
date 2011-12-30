@@ -17,6 +17,7 @@ namespace ISAGenericTestSuiteRunner
 		private int instructionsCount = -1;
 
 		private List<TestCommand> commands;
+		public AliasManager AliasManager { get; private set; }
 
 		public int failedAssertions = 0;
 		public int passedAssertions = 0;
@@ -39,6 +40,7 @@ namespace ISAGenericTestSuiteRunner
 			Stride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
 			instructionsList = new List<string>();
 			commands = new List<TestCommand>();
+			AliasManager = new AliasManager();
 		}
 
 		public void Reset()
@@ -72,7 +74,7 @@ namespace ISAGenericTestSuiteRunner
 				if (q.CycleToWait == 0)
 				{
 					Logger.Instance.WriteDebug("Executed command {0}::'{1}'", q.Command.GetType().ToString(), q.Command.Parameters);
-					q.Command.Execute(this, state);
+					q.Command.Execute(state);
 					toRemove.Add(q);
 				}
 				else
@@ -146,7 +148,7 @@ namespace ISAGenericTestSuiteRunner
 						}
 
 						// Parse the command
-						if (ParseCommand(line, bench))
+						if (bench.ParseCommand(line))
 						{
 							continue;
 						}
@@ -182,7 +184,7 @@ namespace ISAGenericTestSuiteRunner
 		}
 
 		private static Regex commandRegex = new Regex(@"#(?<command>.*?)(@(?<cycles>.*?))?\((?<content>.*?)\)", RegexOptions.IgnoreCase);
-		private static bool ParseCommand(string command, TestBench bench)
+		private bool ParseCommand(string command)
 		{
 			Match m = commandRegex.Match(command);
 			if (m.Success)
@@ -206,13 +208,16 @@ namespace ISAGenericTestSuiteRunner
 				switch (type)
 				{
 					case "end":
-						cmd = new EndTestCommand(bench.instructionsCount, cyclesOffset, content);
+						cmd = new EndTestCommand(this, instructionsCount, cyclesOffset, content);
 						break;
 					case "test":
-						cmd = new AssertTestCommand(bench.instructionsCount, cyclesOffset, content);
+						cmd = new AssertTestCommand(this, instructionsCount, cyclesOffset, content);
 						break;
 					case "skip":
-						bench.instructionsCount += cyclesOffset;
+						instructionsCount += cyclesOffset;
+						break;
+					case "alias":
+						AliasManager.ParseAliasCommand(content);
 						break;
 					default:
 						throw new Exception(string.Format("Invalid type '{0}' in command '{1}'", type, command));
@@ -220,7 +225,7 @@ namespace ISAGenericTestSuiteRunner
 				
 				if (cmd != null)
 				{
-					bench.commands.Add(cmd);
+					commands.Add(cmd);
 				}
 				return true;
 			}
