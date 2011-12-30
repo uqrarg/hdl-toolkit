@@ -55,7 +55,7 @@ namespace ISAGenericTestSuiteRunner
 			if (workingDirectory != null)
 			{
 				// Clean up
-				//Directory.Delete(workingDirectory, true);
+				Directory.Delete(workingDirectory, true);
 				workingDirectory = null;
 			}
 		}

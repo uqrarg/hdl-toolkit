@@ -32,7 +32,9 @@ namespace ISAGenericTestSuiteRunner
 				arguments.Add("-I" + include);
 			}
 
-			string input = PathHelper.Combine(SystemHelper.GetTemporaryDirectory(), "isag-tb-" + Guid.NewGuid().ToString() + ".S");
+			// TODO: use standard in/out or pipes
+			string workingDirectory = SystemHelper.GetTemporaryDirectory();
+			string input = PathHelper.Combine(workingDirectory, "isag-tb-" + Guid.NewGuid().ToString() + ".S");
 			string output = input + ".e";
 
 			arguments.Add("-x assembler-with-cpp " + input); // file input flags
@@ -43,13 +45,16 @@ namespace ISAGenericTestSuiteRunner
 			ProcessHelper.ProcessExecutionResult result = ProcessHelper.ExecuteProcess(
 				Environment.CurrentDirectory, Environment.GetEnvironmentVariable("CROSS_COMPILE") + "gcc", arguments);
 
-			Logger.Instance.WriteDebug(result.StandardError);
-			Logger.Instance.WriteDebug(result.StandardOutput);
+			File.Delete(input);
 
+			if (!File.Exists(output))
+			{
+				Logger.Instance.WriteInfo(result.StandardError.Replace("\n", "\n\t"));
+				throw new Exception("GCC was unable to pre-process the test bench.");
+			}
 			string preprocessedContents = File.ReadAllText(output);
 
-			File.Delete(input);
-			File.Delete(output);
+			Directory.Delete(workingDirectory, true);
 
 			return preprocessedContents;
 		}
