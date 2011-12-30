@@ -41,7 +41,7 @@ namespace ISAGenericTestSuiteRunner
 				if (includeArg)
 				{
 					includeArg = false;
-					testBenchIncludes.Add(a);
+					testBenchIncludes.Add(Path.GetFullPath(a));
 				}
 				else if (string.Compare(a, "-d", true) == 0)
 				{
@@ -51,9 +51,16 @@ namespace ISAGenericTestSuiteRunner
 				{
 					guiEnable = true;
 				}
-				else if (string.Compare(a, "-I", true) == 0)
+				else if (string.Compare(a, "-I", true) == 0 || a.StartsWith("-I", StringComparison.InvariantCultureIgnoreCase))
 				{
-					includeArg = true;
+					if (a.Length > 2)
+					{
+						testBenchIncludes.Add(Path.GetFullPath(a.Substring(2)));
+					}
+					else
+					{
+						includeArg = true;
+					}
 				}
 				else
 				{
