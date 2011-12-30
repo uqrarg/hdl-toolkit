@@ -8,19 +8,21 @@ namespace ISAGenericTestSuiteRunner
 {
 	public abstract class TestCommand
 	{
+		public TestBench TestBench { get; private set; }
 		public string Parameters { get; set; }
 
 		public int Address { get; set; }
 		public int CyclesAfterEvent { get; set; }
 
-		public TestCommand(int addr, int cycles, string parameters)
+		public TestCommand(TestBench testBench, int addr, int cycles, string parameters)
 		{
+			TestBench = testBench;
 			Address = addr;
 			CyclesAfterEvent = cycles;
 			Parameters = parameters;
 		}
 
-		public virtual void Execute(TestBench test, ProcessorState state)
+		public virtual void Execute(ProcessorState state)
 		{
 
 		}
