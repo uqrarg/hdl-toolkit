@@ -7,14 +7,14 @@ namespace ISAGenericTestSuiteRunner
 {
 	public class EndTestCommand : TestCommand
 	{
-		public EndTestCommand(int addr, int cycles, string parameters)
-			: base(addr, cycles, parameters)
+		public EndTestCommand(TestBench testBench, int addr, int cycles, string parameters)
+			: base(testBench, addr, cycles, parameters)
 		{
 		}
 
-		public override void Execute(TestBench test, ProcessorState state)
+		public override void Execute(ProcessorState state)
 		{
-			test.EndTest();
+			TestBench.EndTest();
 		}
 	}
 }
