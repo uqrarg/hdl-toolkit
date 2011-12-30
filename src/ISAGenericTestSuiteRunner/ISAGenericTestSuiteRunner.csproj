@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AliasManager.cs" />
     <Compile Include="AssertTestCommand.cs" />
     <Compile Include="EndTestCommand.cs" />
     <Compile Include="TestCommand.cs" />
