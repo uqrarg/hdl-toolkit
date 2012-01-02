@@ -177,7 +177,7 @@ namespace ISAGenericTestSuiteRunner
 			Logger.Instance.WriteDebug("Pre-processing test bench...");
 
 			// Preprocessing
-			testBenchContents = TestBenchGenerator.PreProcessTestBench(testBenchContents, includeDirectories);
+			testBenchContents = TestBenchGenerator.PreProcessTestBench(testBenchContents, "-P -CC -w", includeDirectories);
 			testBenchText = testBenchContents;
 
 			Logger.Instance.WriteDebug("Pre-processed test bench == ");

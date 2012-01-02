@@ -20,12 +20,15 @@ namespace ISAGenericTestSuiteRunner
 			return TestBenchTemplate(code, templateFile);
 		}
 
-		public static string PreProcessTestBench(string fileContents, List<string> includeDirectories)
+		//FIXME: this is not specific to Test Bench Generation, move to somewhere more generic
+		public static string PreProcessTestBench(string fileContents, string args, List<string> includeDirectories)
 		{
 			Logger.Instance.WriteVerbose("Preprocessing testbench with gcc");
 
 			List<string> arguments = new List<string>();
-			arguments.Add("-E -P -C -w"); // standard preprocessing flags
+			arguments.Add(" -E ");
+			if (args != null)
+				arguments.Add(args);
 			// Include directories
 			foreach (string include in includeDirectories)
 			{
