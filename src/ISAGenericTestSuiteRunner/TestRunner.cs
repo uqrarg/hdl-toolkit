@@ -162,28 +162,24 @@ namespace ISAGenericTestSuiteRunner
 		{
 			// Print the state
 			Console.Write("{0}", Path.GetFileName(fileTest));
-			PrintAssertionsState(bench, forceFailed);
+			bool failure = (bench == null || bench.failedAssertions > 0 || bench.passedAssertions == 0 || forceFailed);
+			PrintAssertionState(failure);
+			if (failure) {
+				Console.Write(TestBench.testBenchText);
+			}
 		}
-
-		private static void PrintAssertionsState(TestBench test, bool forceFailed)
+		
+		private static void PrintAssertionState(bool failed)
 		{
 			Console.CursorLeft = Console.WindowWidth - 12;
 			Console.Write(" [ ");
-			if (test == null || test.failedAssertions > 0 || test.passedAssertions == 0 || forceFailed)
+			ConsoleColor c = failed ? ConsoleColor.Red : ConsoleColor.Green;
+			using (new ConsoleColorScope(c))
 			{
-				using (new ConsoleColorScope(ConsoleColor.Red))
-				{
-					Console.Write("failed");
-				}
+				Console.Write(failed ? "failed" : "passed");
 			}
-			else
-			{
-				using (new ConsoleColorScope(ConsoleColor.Green))
-				{
-					Console.Write("passed");
-				}
-			}
-			Console.WriteLine(" ]");
+			Console.WriteLine(" ] ");
 		}
+
 	}
 }

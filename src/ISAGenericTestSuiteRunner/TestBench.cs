@@ -161,6 +161,8 @@ namespace ISAGenericTestSuiteRunner
 			return bench;
 		}
 
+		public static string testBenchText;
+
 		public static TestBench Load(string file, List<string> includeDirectories)
 		{
 			Logger.Instance.WriteDebug("Loading test bench...");
@@ -171,6 +173,7 @@ namespace ISAGenericTestSuiteRunner
 
 			// Preprocessing
 			testBenchContents = TestBenchGenerator.PreProcessTestBench(testBenchContents, includeDirectories);
+			testBenchText = testBenchContents;
 
 			Logger.Instance.WriteDebug("Pre-processed test bench == ");
 			Logger.Instance.WriteDebug(testBenchContents.Replace("\n", "\n\t"));
