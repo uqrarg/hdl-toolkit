@@ -124,6 +124,7 @@ namespace ISAGenericTestSuiteRunner
 		}
 
 		#region Parsing
+		private static Regex lineRegex = new Regex(@"(?<command>.*?)(\$|$)", RegexOptions.IgnoreCase);
 		private static TestBench Load(string fileContents)
 		{
 			TestBench bench = new TestBench();
@@ -134,26 +135,30 @@ namespace ISAGenericTestSuiteRunner
 				while ((line = reader.ReadLine()) != null)
 				{
 					line = line.Trim();
-					if (!string.IsNullOrEmpty(line))
+					for (Match m = lineRegex.Match(line); m.Success; m = m.NextMatch())
 					{
-						// Ignore comments, and print a warning for ##todo statements
-						if (line.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
+						string command = m.Groups["command"].Value.Trim();
+						if (!string.IsNullOrEmpty(command))
 						{
-							Logger.Instance.WriteWarning("TODO: {1}", line);
-							continue;
+							//print a warning for ##todo statements
+							if (command.StartsWith("##todo", StringComparison.InvariantCultureIgnoreCase))
+							{
+								Logger.Instance.WriteWarning("TODO: {1}", command);
+								continue;
+							}
+							//Ignore comments
+							if (command.StartsWith("##"))
+							{
+								continue;
+							}
+							// Parse the command
+							if (bench.ParseCommand(command))
+							{
+								continue;
+							}
+							bench.instructionsList.Add(command);
+							bench.instructionsCount++;
 						}
-						if (line.StartsWith("##"))
-						{
-							continue;
-						}
-
-						// Parse the command
-						if (bench.ParseCommand(line))
-						{
-							continue;
-						}
-						bench.instructionsList.Add(line);
-						bench.instructionsCount++;
 					}
 				}
 			}
