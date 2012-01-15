@@ -25,7 +25,6 @@ namespace ISAGenericTestSuiteRunner
 		private string workingDirectory;
 		private string isagLibPath;
 		private string isagTestPath;
-		private string pregenPrjFile;
 		private string fileTest;
 		private string fileTemplate;
 		private string fileTemplateBuilt;
@@ -66,7 +65,6 @@ namespace ISAGenericTestSuiteRunner
 
 			isagLibPath = Repository.GetLibraryDefaultRootPath("isa_generic_v2_00_a");
 			isagTestPath = PathHelper.Combine(isagLibPath, "test");
-			pregenPrjFile = PathHelper.Combine(isagTestPath, "simulation.prj");
 			fileTest = TestBenchPath;
 			fileTemplate = PathHelper.Combine(isagTestPath, "proc_exec_test_template.vhd");
 			fileTemplateBuilt = PathHelper.Combine(workingDirectory, "testbench.vhd");
