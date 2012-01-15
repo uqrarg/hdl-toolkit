@@ -108,6 +108,15 @@ namespace HDLToolkit.Framework.Simulation
 				this.vector[i] = defaultValue;
 			}
 		}
+		
+		public StdLogicVector(int length, uint val)
+		{
+			this.vector = new StdLogic[length];
+			for (int i = 0; i < length; i++)
+			{
+				this.vector[i] = ( ((val >> i ) & 1) == 1 ? StdLogic._1 : StdLogic._0);
+			}
+		}
 
 		#endregion
 
