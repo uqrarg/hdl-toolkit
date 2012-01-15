@@ -52,7 +52,7 @@ namespace ISAGenericTestSuiteRunner
 			endCalled = false;
 		}
 
-		public void RunAssertions(Processor proc)
+		public void RunCommands(Processor proc)
 		{
 			ProcessorState state = proc.GetCurrentState();
 			int nextPhysicalPC = state.PC / Stride;

@@ -132,7 +132,7 @@ namespace ISAGenericTestSuiteRunner
 					{
 						// Run until the first instruction is next
 						proc.RunToNextValidInstruction();
-						bench.RunAssertions(proc);
+						bench.RunCommands(proc);
 						if (bench.IsTestComplete())
 						{
 							break;
