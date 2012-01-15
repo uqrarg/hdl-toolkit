@@ -1,0 +1,10 @@
+#TODO: make more intelligent
+
+echo "Installing debug"
+
+sudo find src -name "*.exe" -exec cp '{}' /usr/bin \;
+sudo find src -name "*.dll" -exec cp '{}' /usr/bin \;
+
+if [ ! $(echo $MONO_PATH | grep "$(pwd)/src/bin/Debug") ];  then
+	export MONO_PATH=$MONO_PATH:$(pwd)/src/bin/Debug;
+fi
