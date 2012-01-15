@@ -216,6 +216,8 @@ namespace ISAGenericTestSuiteRunner
 					case "alias":
 						AliasManager.ParseAliasCommand(content);
 						break;
+					case "irq":
+						cmd = new IrqTestCommand(this, instructionsCount, cyclesOffset, content);
 					default:
 						throw new Exception(string.Format("Invalid type '{0}' in command '{1}'", type, command));
 				}
