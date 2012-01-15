@@ -12,9 +12,11 @@ namespace ISAGenericTestSuiteRunner
 		{
 		}
 
-		public override void Execute(ProcessorState state)
+		public override void Execute(Processor proc)
 		{
-			TestBench.EndTest();
+			throw new EndTestCommandExc();
 		}
+		
+		public class EndTestCommandExc : Exception {}
 	}
 }

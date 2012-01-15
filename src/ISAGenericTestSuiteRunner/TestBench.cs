@@ -21,8 +21,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public int failedAssertions = 0;
 		public int passedAssertions = 0;
-		public bool endCalled = false;
-
+		
 		private class QueuedCommand
 		{
 			public TestCommand Command { get; set; }
@@ -49,7 +48,6 @@ namespace ISAGenericTestSuiteRunner
 
 			failedAssertions = 0;
 			passedAssertions = 0;
-			endCalled = false;
 		}
 
 		public void RunCommands(Processor proc)
@@ -75,7 +73,7 @@ namespace ISAGenericTestSuiteRunner
 				if (q.CycleToWait == 0)
 				{
 					Logger.Instance.WriteDebug("Executed command {0}::'{1}'", q.Command.GetType().ToString(), q.Command.Parameters);
-					q.Command.Execute(state);
+					q.Command.Execute(proc);
 					toRemove.Add(q);
 				}
 				else
@@ -87,16 +85,6 @@ namespace ISAGenericTestSuiteRunner
 			{
 				queuedCommands.Remove(q);
 			}
-		}
-
-		public void EndTest()
-		{
-			endCalled = true;
-		}
-
-		public bool IsTestComplete()
-		{
-			return endCalled;
 		}
 
 		public void IncrementAssertionResult(bool passed)

@@ -22,7 +22,7 @@ namespace ISAGenericTestSuiteRunner
 			Parameters = parameters;
 		}
 
-		public virtual void Execute(ProcessorState state)
+		public virtual void Execute(Processor proc)
 		{
 
 		}

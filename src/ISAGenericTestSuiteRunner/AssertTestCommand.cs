@@ -17,8 +17,10 @@ namespace ISAGenericTestSuiteRunner
 
 		private static Regex assertionOperation = new Regex("(?<a>.*?)(?<op>(==|!=))(?<b>.*)", RegexOptions.IgnoreCase);
 
-		public override void Execute(ProcessorState state)
+		//FIXME: move this regex stuff to the constructor
+		public override void Execute(Processor proc)
 		{
+			ProcessorState state = proc.GetCurrentState();
 			Match m = assertionOperation.Match(Parameters);
 			if (m.Success)
 			{
