@@ -8,12 +8,6 @@ namespace ISAGenericTestSuiteRunner
 {
 	public class ProcessorState
 	{
-		public struct ProgramCounterState
-		{
-			public int Value { get; set; }
-			public bool Valid { get; set; }
-		}
-
 		public int PC { get; set; }
 
 		public int[] GpRegisters { get; set; }
