@@ -132,9 +132,7 @@ namespace ISAGenericTestSuiteRunner
 					{
 						// Run until the first instruction is next
 						proc.RunToNextValidInstruction();
-						ProcessorState state = proc.GetCurrentState();
-						bench.RunAssertions(state);
-
+						bench.RunAssertions(proc);
 						if (bench.IsTestComplete())
 						{
 							break;
