@@ -81,6 +81,12 @@ namespace HDLToolkit.Xilinx.Simulation
 			throw new Exception("Unable to parse ISim output.");
 		}
 
+		public void SetSignalState(string path, StdLogicVector val)
+		{
+			CheckRunning();	
+			InjectCommand("put " + path + val.ToString() + "-radix bin");
+		}
+
 		private static string TrimExcessData(string str)
 		{
 			return str.Trim(' ', '\r', '\n');
