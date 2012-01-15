@@ -50,8 +50,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public void RunCommands(Processor proc)
 		{
-			ProcessorState state = proc.GetCurrentState();
-			int nextPhysicalPC = state.PC / Stride;
+			int nextPhysicalPC = proc.GetPC() / Stride;
 
 			// find all commands to be made
 			foreach (TestCommand c in commands)

@@ -18,9 +18,18 @@ namespace ISAGenericTestSuiteRunner
 		public static int NumGpRegisters { get; set; }
 		public static int NumSpRegisters { get; set; }
 		public static int NumIrqs { get; set; }
-		private ProcessorState state = new ProcessorState();
-		private bool stateDirty = true;
-
+		
+		private int PC;
+		private bool PCDirty = true;
+		
+		class RegState {
+			public int val;
+			public bool dirty = true;
+		}
+			
+		private RegState[] GpRegisters;
+		private RegState[] SpRegisters;
+		
 		public Processor(ISimSimulator sim)
 		{
 			WordSize = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE"));
@@ -28,38 +37,51 @@ namespace ISAGenericTestSuiteRunner
 			NumSpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_SPR"));
 			NumIrqs = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_IRQS"));
 			Simulator = sim;
+			
+			GpRegisters = new RegState[NumGpRegisters];
+			SpRegisters = new RegState[NumSpRegisters];
 		}
 		
-		public ProcessorState GetCurrentState()
-		{
-			if (stateDirty)
-				RefreshCurrentState();
-			return state;
-		}
-			
-		private void RefreshCurrentState()
-		{
-			state.PC = (int)(Simulator.GetSignalState("UUT/pcs(1)").Flip().ToLong()); // current PC
-
-			state.GpRegisters = new int[NumGpRegisters];
-			state.SpRegisters = new int[NumSpRegisters];
-			for (int i = 0; i < NumGpRegisters; i++)
-				state.GpRegisters[i] = (int)(Simulator.GetSignalState(
-					//FIXME: macroify or global variableify UUT somwehere
-					"UUT/gprf/ISO_REG_FILE_INST/ram(" + i + ")(" + (WordSize - 1) + ":0)"
-				).Flip().ToLong());
-			for (int i = 0; i < NumSpRegisters; i++) {
-				state.SpRegisters[i] = (int)(Simulator.GetSignalState(
+		public int GetSpRegister(int i) {
+			if (SpRegisters[i].dirty) {
+				SpRegisters[i].val = (int)(Simulator.GetSignalState(
 					"UUT/state_1.rs(" + i + ")(" + (WordSize - 1) + ":0)"
 				).Flip().ToLong());
+				SpRegisters[i].dirty = false;
 			}
-			stateDirty = false;
+			return SpRegisters[i].val;
 		}
-
+			
+		public int GetGpRegister(int i) {
+			if (GpRegisters[i].dirty) {
+				GpRegisters[i].val = (int)(Simulator.GetSignalState(
+					"UUT/state_1.rs(" + i + ")(" + (WordSize - 1) + ":0)"
+				).Flip().ToLong());
+				GpRegisters[i].dirty = false;
+			}
+			return GpRegisters[i].val;
+		}
+		
+		public int GetPC() {
+			if (PCDirty) {
+				PC = (int)(Simulator.GetSignalState("UUT/pcs(1)").Flip().ToLong()); // current PC
+				PCDirty = false;
+			}
+			return PC;
+		}
+				
+		private void dirtyAll () {
+			for (int i = 0; i < SpRegisters.Length; i++)
+				SpRegisters[i].dirty = true;
+			for (int i = 0; i < GpRegisters.Length; i++)
+				GpRegisters[i].dirty = true;
+			PCDirty = true;
+		}
+				
 		public void RunCycle()
 		{
-			stateDirty = true;
 			Simulator.RunFor(10);
+			dirtyAll();
 		}
 
 		public void RunToNextValidInstruction()
@@ -143,7 +165,7 @@ namespace ISAGenericTestSuiteRunner
 				}
 			
 				if (operand.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase)) {
-					ret = PC; return true;
+					ret = PCProp; return true;
 				}
 				
 				return false;
@@ -186,7 +208,7 @@ namespace ISAGenericTestSuiteRunner
 				base(index, start, end) {}
 			
 			public override int Evaluate(Processor proc) {
-				return Evaluate(proc.GetCurrentState().SpRegisters[index]);
+				return Evaluate(proc.GetSpRegister(index));
 			}
 		}
 		
@@ -196,18 +218,18 @@ namespace ISAGenericTestSuiteRunner
 				base(index, start, end) {}
 			
 			public override int Evaluate(Processor proc) {
-				return Evaluate(proc.GetCurrentState().GpRegisters[index]);
+				return Evaluate(proc.GetGpRegister(index));
 			}
 		}
 		
 		private class PCProperty : Property
 		{
 			public override int Evaluate(Processor proc) {
-				return proc.GetCurrentState().PC;
+				return proc.GetPC();
 			}
 		}
 		
-		public static Property PC = new PCProperty();
+		public static Property PCProp = new PCProperty();
 
 	}
 }
