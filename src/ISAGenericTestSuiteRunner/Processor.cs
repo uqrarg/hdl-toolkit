@@ -229,7 +229,7 @@ namespace ISAGenericTestSuiteRunner
 			}
 		}
 		
-		public static Property PCProp = new PCProperty();
+		private static Property PCProp = new PCProperty();
 
 	}
 }
