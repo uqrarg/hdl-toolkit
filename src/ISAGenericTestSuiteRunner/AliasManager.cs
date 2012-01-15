@@ -117,5 +117,7 @@ namespace ISAGenericTestSuiteRunner
 			}
 			return operand;
 		}
+		
+		public static AliasManager Instance = new AliasManager();
 	}
 }

@@ -17,7 +17,6 @@ namespace ISAGenericTestSuiteRunner
 		private int instructionsCount = -1;
 
 		private List<TestCommand> commands;
-		public AliasManager AliasManager { get; private set; }
 
 		public int failedAssertions = 0;
 		public int passedAssertions = 0;
@@ -39,7 +38,6 @@ namespace ISAGenericTestSuiteRunner
 			Stride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
 			instructionsList = new List<string>();
 			commands = new List<TestCommand>();
-			AliasManager = new AliasManager();
 		}
 
 		public void Reset()
@@ -214,10 +212,11 @@ namespace ISAGenericTestSuiteRunner
 						instructionsCount += cyclesOffset;
 						break;
 					case "alias":
-						AliasManager.ParseAliasCommand(content);
+						AliasManager.Instance.ParseAliasCommand(content);
 						break;
 					case "irq":
 						cmd = new IrqTestCommand(this, instructionsCount, cyclesOffset, content);
+						break;
 					default:
 						throw new Exception(string.Format("Invalid type '{0}' in command '{1}'", type, command));
 				}
