@@ -26,5 +26,16 @@ namespace ISAGenericTestSuiteRunner
 		{
 
 		}
+		
+		public class MalformedException : Exception {
+			
+			public MalformedException (string msg) :
+				base("Malformed test Command: " + msg) {}
+			
+			public MalformedException (string msg, Exception inner) :
+				base("Malformed test Command: " + msg, inner) {}
+			
+		}
 	}
+
 }
