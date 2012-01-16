@@ -11,14 +11,21 @@ namespace ISAGenericTestSuiteRunner
 {
 	public class Processor
 	{
-		public ISimSimulator Simulator { get; set; }
-		
 		//FIXME: localise this somewhow (C# syntax is teh suk with no non-static inner classes)
 		public static int WordSize { get; set; }
 		public static int NumGpRegisters { get; set; }
 		public static int NumSpRegisters { get; set; }
 		public static int NumIrqs { get; set; }
 		
+		static Processor () {
+			WordSize = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE"));
+			NumGpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_GPR"));
+			NumSpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_SPR"));
+			NumIrqs = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_IRQS"));
+		}
+
+		public ISimSimulator Simulator { get; set; }
+
 		private int PC;
 		private bool PCDirty = true;
 		
@@ -32,12 +39,7 @@ namespace ISAGenericTestSuiteRunner
 		
 		public Processor(ISimSimulator sim)
 		{
-			WordSize = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE"));
-			NumGpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_GPR"));
-			NumSpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_SPR"));
-			NumIrqs = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_IRQS"));
 			Simulator = sim;
-			
 			GpRegisters = new RegState[NumGpRegisters];
 			SpRegisters = new RegState[NumSpRegisters];
 		}
