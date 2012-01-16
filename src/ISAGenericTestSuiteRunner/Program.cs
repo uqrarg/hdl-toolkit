@@ -29,7 +29,7 @@ namespace ISAGenericTestSuiteRunner
 {
 	class Program
 	{
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
 			bool debugEnable = false;
 			bool guiEnable = false;
@@ -72,6 +72,8 @@ namespace ISAGenericTestSuiteRunner
 			{
 				Logger.Instance.VerbosityLevel = Logger.Verbosity.Debug;
 			}
+			
+			int ret = 0;
 
 			XilinxRepository repo = new XilinxRepository();
 			repo.AddSearchPath(PathHelper.Combine(XilinxHelper.GetRootXilinxPath(), "EDK", "hw"));
@@ -113,14 +115,17 @@ namespace ISAGenericTestSuiteRunner
 					{
 						Console.WriteLine("Exception {0}", ex.Message);
 						Console.WriteLine("{0}", ex.StackTrace);
-						Console.WriteLine("Continuing...");
+						Console.WriteLine("Exiting...");
+						return 1;
 					}
 				}
 				else
 				{
+					ret = 1;
 					Logger.Instance.WriteError("{0} does not exist", Path.GetFileName(fullFilePath));
 				}
 			}
+			return ret;
 		}
 	}
 }
