@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Globalization;
 using HDLToolkit;
 using HDLToolkit.Framework.Simulation;
 using HDLToolkit.Xilinx.Simulation;
@@ -40,8 +41,10 @@ namespace ISAGenericTestSuiteRunner
 		public Processor(ISimSimulator sim)
 		{
 			Simulator = sim;
-			GpRegisters = new RegState[NumGpRegisters];
+			GpRegisters = new RegState[NumGpRegisters]; 
+			for (int i = 0; i < GpRegisters.Length; ++i) GpRegisters[i] = new RegState();
 			SpRegisters = new RegState[NumSpRegisters];
+			for (int i = 0; i < SpRegisters.Length; ++i) SpRegisters[i] = new RegState();
 		}
 		
 		public int GetSpRegister(int i) {
@@ -56,8 +59,8 @@ namespace ISAGenericTestSuiteRunner
 			
 		public int GetGpRegister(int i) {
 			if (GpRegisters[i].dirty) {
-				GpRegisters[i].val = (int)(Simulator.GetSignalState(
-					"UUT/state_1.rs(" + i + ")(" + (WordSize - 1) + ":0)"
+               GpRegisters[i].val = (int)(Simulator.GetSignalState(
+                       "UUT/gprf/ISO_REG_FILE_INST/ram(" + i + ")(" + (WordSize - 1) + ":0)"
 				).Flip().ToLong());
 				GpRegisters[i].dirty = false;
 			}
@@ -110,9 +113,8 @@ namespace ISAGenericTestSuiteRunner
 			public abstract int Evaluate(Processor proc);
 			
 			private static Regex regRegex = new Regex(@"^(?<type>.)(?<index>\d+)(\[(?<start>\d{1,2})(:(?<end>\d{1,2}))?\])?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			public static bool TryParse(string operand, out Property ret)
+			public static void TryParse(string operand, out Property ret)
 			{
-				ret = null;
 				operand = AliasManager.Instance.AliasConvertOperand(operand);
 				Logger.Instance.WriteDebug("\t\tOperand aliased to '{0}'", operand);
 				Match m = regRegex.Match(operand);
@@ -128,48 +130,56 @@ namespace ISAGenericTestSuiteRunner
 					string startStr;
 					if (m.Groups["start"] != null && !string.IsNullOrEmpty(startStr = m.Groups["start"].Value)) {
 						if (!int.TryParse(startStr, out rangeStart))
-							throw new PropertyParseException("bad register index" + startStr, operand);
+							throw new ParseException("bad register index" + startStr, operand);
 						rangeEnd = rangeStart;						
 					}
 					// Parse the end index
 					string endStr;
 					if (m.Groups["end"] != null && !string.IsNullOrEmpty(endStr = m.Groups["end"].Value)) {
 						if (!int.TryParse(endStr, out rangeEnd))
-							throw new PropertyParseException("bad register index" + endStr, operand);
+							throw new ParseException("bad register index" + endStr, operand);
 					}
 					
 					switch (registerType)
 					{
 						case "r":
 							if (index >= Processor.NumGpRegisters)
-								throw new PropertyParseException("GP register index invalid" + index, operand);
+								throw new ParseException("GP register index invalid" + index, operand);
 							ret = new GPRegProperty(index, rangeStart, rangeEnd);
 							break;
 						case "s":
 							if (index >= Processor.NumSpRegisters)
-								throw new PropertyParseException("SP register index invalid" + index, operand);
+								throw new ParseException("SP register index invalid" + index, operand);
 							ret = new SPRegProperty(index, rangeStart, rangeEnd);
 							break;
 						default :
-							throw new PropertyParseException("Invalid register type: " + registerType, operand);
+							throw new ParseException("Invalid register type: " + registerType, operand);
 					}
-					return true;
+					return;
 				}
 				
 				int cval;
-				if (int.TryParse(operand, out cval)) {
-					ret = new ConstantProperty(cval); return true;
-				}
-			
-				if (operand.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase)) {
-					ret = PCProp; return true;
+				if (operand.StartsWith("0x") || operand.StartsWith("0X")) {
+					if (int.TryParse(operand.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out cval)) {
+						ret = new ConstantProperty(cval); return;
+					} else {
+						throw new ParseException("Invalid hexidecimal number type: ", operand);
+					}
 				}
 				
-				return false;
+				if (int.TryParse(operand, out cval)) {
+					ret = new ConstantProperty(cval); return;
+				} 
+			
+				if (operand.StartsWith("pc", StringComparison.InvariantCultureIgnoreCase)) {
+					ret = PCProp; return;
+				}
+				
+				throw new ParseException("Parse Error", operand);
 			}
 			
-			public class PropertyParseException : Exception {
-				public PropertyParseException(string reason, string prop) :
+			public class ParseException : Exception {
+				public ParseException(string reason, string prop) :
 					base("Invalid Processor Property " + prop + " : " + reason) {}
 			}
 		}
