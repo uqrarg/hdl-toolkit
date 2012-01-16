@@ -26,7 +26,8 @@ namespace ISAGenericTestSuiteRunner
 				) return;
 			}
 			
-			Console.WriteLine("Malformed irq action:" + Parameters);
+			//FIXME: Split error causes into more specific ones
+			throw new TestCommand.MalformedException("");
 		}
 
 		public override void Execute(Processor proc)
