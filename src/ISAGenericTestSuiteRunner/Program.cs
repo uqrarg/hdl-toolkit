@@ -113,8 +113,13 @@ namespace ISAGenericTestSuiteRunner
 					}
 					catch (Exception ex)
 					{
-						Console.WriteLine("Exception {0}", ex.Message);
-						Console.WriteLine("{0}", ex.StackTrace);
+						int tabbage = 0;
+						for (Exception e = ex; e != null; e = e.InnerException) {
+							for (int i = 0; i < tabbage; i++) Console.Write("\t");
+							Console.WriteLine(e.Message);
+							tabbage++;
+						}
+						PrintCompoundStackStrace(ex);
 						Console.WriteLine("Exiting...");
 						return 1;
 					}
@@ -127,5 +132,13 @@ namespace ISAGenericTestSuiteRunner
 			}
 			return ret;
 		}
+		
+		//FIXME: find out how to do this properly
+		static void PrintCompoundStackStrace(Exception e) {
+			if (e.InnerException != null)
+				PrintCompoundStackStrace(e.InnerException);
+			Console.WriteLine(e.StackTrace);
+		}
+		
 	}
 }
