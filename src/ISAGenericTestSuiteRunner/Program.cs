@@ -127,7 +127,7 @@ namespace ISAGenericTestSuiteRunner
 				else
 				{
 					ret = 1;
-					Logger.Instance.WriteError("{0} does not exist", Path.GetFileName(fullFilePath));
+					Logger.Instance.WriteError("Input file {0} does not exist", Path.GetFileName(fullFilePath));
 				}
 			}
 			return ret;
