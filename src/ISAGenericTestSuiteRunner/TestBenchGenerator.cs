@@ -102,38 +102,35 @@ namespace ISAGenericTestSuiteRunner
 			Logger.Instance.WriteVerbose("Generating VHDL Testbench");
 
 			//FIXME: these should be command line arguments and not environment variables
-			int numBytesPerBlock = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_INSTR_SIZE_BYTES"));
-			int addrStride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
-			bool bigEndian = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_BIG_ENDIAN")) == 1;
 
 			code.Seek(0, SeekOrigin.Begin);
 
 			int currentBlockIndex = 0;
-			byte[] currentBlock = new byte[numBytesPerBlock];
+			byte[] currentBlock = new byte[Processor.InstrSizeBytes];
 			int currentData = 0;
 			while ((currentData = code.ReadByte()) != -1)
 			{
 				// Fill the array from the right to the left (right side = LSB)
-				currentBlock[numBytesPerBlock - ++currentBlockIndex] = (byte)currentData;
+				currentBlock[currentBlockIndex++] = (byte)currentData;
 				// Block is complete
-				if (currentBlockIndex == numBytesPerBlock)
+				if (currentBlockIndex == Processor.InstrSizeBytes)
 				{
 					currentBlockIndex = 0;
 
-					// Swap the order for big endian systems
-					if (bigEndian)
+					// Swap the order for little endian systems
+					if (!Processor.BigEndian)
 					{
 						Array.Reverse(currentBlock);
 					}
 					data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1}\"),",
-						currentAddress, StringHelpers.BytesToString(currentBlock, 0, numBytesPerBlock)));
-					currentAddress += addrStride;
+						currentAddress, StringHelpers.BytesToString(currentBlock, 0, Processor.InstrSizeBytes)));
+					currentAddress += Processor.InstrSizeBytes;
 				}
 			}
 
 			// FIXME: this is a hack because of VHDLs inability to support single element arrays?
 			data.AppendLine(string.Format("\t\t\tipif_addr_data_pair_format(x\"{0:X8}\", x\"{1}\")",
-				-1, StringHelpers.BytesToString(new byte[numBytesPerBlock], 0, numBytesPerBlock)));
+				-1, StringHelpers.BytesToString(new byte[Processor.InstrSizeBytes], 0, Processor.InstrSizeBytes)));
 
 			return template.Replace("##DATAARRAY", data.ToString());
 		}

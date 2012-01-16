@@ -17,12 +17,17 @@ namespace ISAGenericTestSuiteRunner
 		public static int NumGpRegisters { get; set; }
 		public static int NumSpRegisters { get; set; }
 		public static int NumIrqs { get; set; }
+		public static int InstrSizeBytes { get; set; }
+		public static bool BigEndian { get; set; }
 		
 		static Processor () {
+			//FIXME: log these somewhere and detect bad/unset values
 			WordSize = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE"));
 			NumGpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_GPR"));
 			NumSpRegisters = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_SPR"));
 			NumIrqs = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_NUM_IRQS"));
+			InstrSizeBytes = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_INSTR_SIZE_BYTES"));
+			BigEndian = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_BIG_ENDIAN")) == 1;
 		}
 
 		public ISimSimulator Simulator { get; set; }

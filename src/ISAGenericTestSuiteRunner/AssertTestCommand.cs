@@ -60,8 +60,8 @@ namespace ISAGenericTestSuiteRunner
 			
 			if (!passed)
 			{
-				int stride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
-				string fmt = "X" + (Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_WORD_SIZE")) / 4);
+				int stride = Convert.ToInt32(Processor.InstrSizeBytes);
+				string fmt = "X" + (Convert.ToInt32(Processor.WordSize) / 4);
 				Logger.Instance.WriteError("Assertion failed 0x{0:"+fmt+"}@{1}, '{2}' <> '{3:"+fmt+"} {4} {5:"+fmt+"}'",
 					Address * stride, CyclesAfterEvent, Parameters,
 					a, OpToString(o), b);

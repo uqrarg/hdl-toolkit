@@ -11,8 +11,6 @@ namespace ISAGenericTestSuiteRunner
 {
 	public class TestBench
 	{
-		private int Stride;
-
 		private List<string> instructionsList;
 		private int instructionsCount = -1;
 
@@ -35,7 +33,6 @@ namespace ISAGenericTestSuiteRunner
 
 		public TestBench()
 		{
-			Stride = Convert.ToInt32(Environment.GetEnvironmentVariable("ISAG_STRIDE"));
 			instructionsList = new List<string>();
 			commands = new List<TestCommand>();
 		}
@@ -50,7 +47,7 @@ namespace ISAGenericTestSuiteRunner
 
 		public void RunCommands(Processor proc)
 		{
-			int nextPhysicalPC = proc.GetPC() / Stride;
+			int nextPhysicalPC = proc.GetPC() / Processor.InstrSizeBytes;
 
 			// find all commands to be made
 			foreach (TestCommand c in commands)
