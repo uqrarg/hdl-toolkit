@@ -104,7 +104,7 @@ namespace ISAGenericTestSuiteRunner
 		}
 		
 		public abstract class Property
-		{	
+		{
 			public abstract int Evaluate(Processor proc);
 			
 			private static Regex regRegex = new Regex(@"^(?<type>.)(?<index>\d+)(\[(?<start>\d{1,2})(:(?<end>\d{1,2}))?\])?", RegexOptions.IgnoreCase | RegexOptions.Multiline);
@@ -123,38 +123,33 @@ namespace ISAGenericTestSuiteRunner
 					// Parse the start index
 					int rangeStart = Processor.WordSize-1;
 					int rangeEnd = 0;
-					if (m.Groups["start"] != null && !string.IsNullOrEmpty(m.Groups["start"].Value)) {
-						if (!int.TryParse(m.Groups["start"].Value, out rangeStart)) {
-							//TODO: sensible error message
-							return false;
-						} else {
-							rangeEnd = rangeStart;
-						}
+					string startStr;
+					if (m.Groups["start"] != null && !string.IsNullOrEmpty(startStr = m.Groups["start"].Value)) {
+						if (!int.TryParse(startStr, out rangeStart))
+							throw new PropertyParseException("bad register index" + startStr, operand);
+						rangeEnd = rangeStart;						
 					}
 					// Parse the end index
-					if (m.Groups["end"] != null && !string.IsNullOrEmpty(m.Groups["end"].Value)) {
-						if (!int.TryParse(m.Groups["end"].Value, out rangeEnd)) {
-							//TODO: sensible error message
-							return false;
-						}
+					string endStr;
+					if (m.Groups["end"] != null && !string.IsNullOrEmpty(endStr = m.Groups["end"].Value)) {
+						if (!int.TryParse(endStr, out rangeEnd))
+							throw new PropertyParseException("bad register index" + endStr, operand);
 					}
 					
 					switch (registerType)
 					{
 						case "r":
-							if (index < Processor.NumGpRegisters)
-							{
-								ret = new GPRegProperty(index, rangeStart, rangeEnd);
-							} //TODO: else some error message
+							if (index >= Processor.NumGpRegisters)
+								throw new PropertyParseException("GP register index invalid" + index, operand);
+							ret = new GPRegProperty(index, rangeStart, rangeEnd);
 							break;
 						case "s":
-							if (index < Processor.NumGpRegisters)
-							{
-								ret = new SPRegProperty(index, rangeStart, rangeEnd);
-							} //TODO: else some error message
+							if (index >= Processor.NumSpRegisters)
+								throw new PropertyParseException("SP register index invalid" + index, operand);
+							ret = new SPRegProperty(index, rangeStart, rangeEnd);
 							break;
 						default :
-							return false;
+							throw new PropertyParseException("Invalid register type: " + registerType, operand);
 					}
 					return true;
 				}
@@ -169,6 +164,11 @@ namespace ISAGenericTestSuiteRunner
 				}
 				
 				return false;
+			}
+			
+			public class PropertyParseException : Exception {
+				public PropertyParseException(string reason, string prop) :
+					base("Invalid Processor Property " + prop + " : " + reason) {}
 			}
 		}
 		
