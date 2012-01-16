@@ -23,18 +23,13 @@ namespace ISAGenericTestSuiteRunner
 			: base(testBench, addr, cycles, parameters)
 		{
 			Match m = assertionOperation.Match(parameters);
-			if (!m.Success) {
-				//TODO: sanitise error messages
-				Console.WriteLine("Malformed assertion! '{0}'", Parameters);
-				return;
-			}
-			if (
-				!Processor.Property.TryParse(m.Groups["a"].Value.Trim(), out a) ||
-				!Processor.Property.TryParse(m.Groups["b"].Value.Trim(), out b)
-			) {
-				//TODO: sanitise error messages
-				Console.WriteLine("Malformed assertion! '{0}'", Parameters);
-				return;
+			if (!m.Success)
+				throw new TestCommand.MalformedException("Bad Assert Command Syntax");
+			try {
+				Processor.Property.TryParse(m.Groups["a"].Value.Trim(), out a);
+				Processor.Property.TryParse(m.Groups["b"].Value.Trim(), out b);
+			} catch (Processor.Property.ParseException e) {
+				throw new TestCommand.MalformedException("Invalid operand", e);
 			}
 			string op = m.Groups["op"].Value.Trim();
 				
@@ -44,8 +39,7 @@ namespace ISAGenericTestSuiteRunner
 				o = Operation.NE;
 			} else {
 				//TODO: sanitise error messages
-				Console.WriteLine("Malformed assertion! '{0}'", Parameters);
-				return;
+				throw new TestCommand.MalformedException("Invalid Assertion operator" + o);
 			}
 			
 		}
@@ -74,7 +68,7 @@ namespace ISAGenericTestSuiteRunner
 			}
 
 			TestBench.IncrementAssertionResult(passed);
-				return;
+			return;
 
 		}
 		
